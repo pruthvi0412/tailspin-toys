@@ -1,0 +1,73 @@
+---
+import type { Category } from '../lib/categories';
+import type { Publisher } from '../lib/publishers';
+
+interface Props {
+  categories: Category[];
+  publishers: Publisher[];
+}
+
+const { categories, publishers } = Astro.props;
+---
+
+<div class="flex flex-col sm:flex-row gap-4 mb-6 bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+  <div class="flex-1">
+    <label for="category-filter" class="block text-sm font-medium text-slate-300 mb-1">Category</label>
+    <select
+      id="category-filter"
+      data-testid="category-filter"
+      class="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
+    >
+      <option value="">All Categories</option>
+      {categories.map((c) => (
+        <option value={c.id}>{c.name}</option>
+      ))}
+    </select>
+  </div>
+  
+  <div class="flex-1">
+    <label for="publisher-filter" class="block text-sm font-medium text-slate-300 mb-1">Publisher</label>
+    <select
+      id="publisher-filter"
+      data-testid="publisher-filter"
+      class="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
+    >
+      <option value="">All Publishers</option>
+      {publishers.map((p) => (
+        <option value={p.id}>{p.name}</option>
+      ))}
+    </select>
+  </div>
+</div>
+
+<script>
+  function setupFilters() {
+    const categorySelect = document.getElementById('category-filter') as HTMLSelectElement | null;
+    const publisherSelect = document.getElementById('publisher-filter') as HTMLSelectElement | null;
+    const gameCards = document.querySelectorAll<HTMLElement>('[data-testid="game-card"]');
+    
+    function filterGames() {
+      const selectedCategory = categorySelect?.value;
+      const selectedPublisher = publisherSelect?.value;
+      
+      gameCards.forEach(card => {
+        const gameCategory = card.getAttribute('data-category-id');
+        const gamePublisher = card.getAttribute('data-publisher-id');
+        
+        const categoryMatch = !selectedCategory || selectedCategory === gameCategory;
+        const publisherMatch = !selectedPublisher || selectedPublisher === gamePublisher;
+        
+        if (categoryMatch && publisherMatch) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+    
+    categorySelect?.addEventListener('change', filterGames);
+    publisherSelect?.addEventListener('change', filterGames);
+  }
+  
+  setupFilters();
+</script>

@@ -5,10 +5,18 @@ import PageHero from '../components/PageHero.astro';
 import EmptyState from '../components/EmptyState.astro';
 import { getDatabase } from '../lib/db';
 import { getAllGames } from '../lib/games';
+import { getCategories } from '../lib/categories';
+import { getPublishers } from '../lib/publishers';
+import FilterControls from '../components/FilterControls.astro';
 
 export const prerender = true;
 
-const games = await getAllGames(getDatabase());
+const db = getDatabase();
+const [games, categories, publishers] = await Promise.all([
+  getAllGames(db),
+  getCategories(db),
+  getPublishers(db),
+]);
 ---
 
 <Layout title="Tailspin Toys - Crowdfunding your new favorite game!">
@@ -19,7 +27,11 @@ const games = await getAllGames(getDatabase());
     />
 
     <div>
-      <h2 class="text-2xl font-medium mb-6 text-slate-100">Featured Games</h2>
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-medium text-slate-100">Featured Games</h2>
+      </div>
+      
+      <FilterControls categories={categories} publishers={publishers} />
 
       {games.length === 0 ? (
         <EmptyState text="No games available at the moment." />
