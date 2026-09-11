@@ -6,6 +6,7 @@ import {
     getAllGames,
     getAllGameIds,
     getGameById,
+    getFilteredGames,
 } from './games';
 
 async function seedGames(db: Database, count: number): Promise<void> {
@@ -62,5 +63,29 @@ describe('games data-access helpers', () => {
     it('returns null for a non-existent game', async () => {
         await seedGames(db, 2);
         expect(await getGameById(db, 99999)).toBeNull();
+    });
+
+    it('filters games by category and publisher', async () => {
+        // Setup additional data for filtering
+        const [cat1] = await db.insert(categories).values({ name: 'Cat 1' }).returning();
+        const [cat2] = await db.insert(categories).values({ name: 'Cat 2' }).returning();
+        const [pub1] = await db.insert(publishers).values({ name: 'Pub 1' }).returning();
+        const [pub2] = await db.insert(publishers).values({ name: 'Pub 2' }).returning();
+
+        await db.insert(games).values([
+            { title: 'G1', description: 'd', categoryId: cat1.id, publisherId: pub1.id },
+            { title: 'G2', description: 'd', categoryId: cat1.id, publisherId: pub2.id },
+            { title: 'G3', description: 'd', categoryId: cat2.id, publisherId: pub1.id },
+            { title: 'G4', description: 'd', categoryId: cat2.id, publisherId: pub2.id },
+        ]);
+
+        const filterCat1 = await getFilteredGames(db, { categoryId: cat1.id });
+        expect(filterCat1.map(g => g.title)).toEqual(['G1', 'G2']);
+
+        const filterPub2 = await getFilteredGames(db, { publisherId: pub2.id });
+        expect(filterPub2.map(g => g.title)).toEqual(['G2', 'G4']);
+
+        const filterBoth = await getFilteredGames(db, { categoryId: cat2.id, publisherId: pub1.id });
+        expect(filterBoth.map(g => g.title)).toEqual(['G3']);
     });
 });
